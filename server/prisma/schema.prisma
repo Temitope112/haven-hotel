@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+    importFileExtension = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  GUEST
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  role      UserRole  @default(GUEST)
+  bookings  Booking[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Room {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String
+  price       Decimal
+  capacity    Int
+  imageUrl    String?
+  bookings    Booking[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Booking {
+  id         Int           @id @default(autoincrement())
+  checkIn    DateTime
+  checkOut   DateTime
+  guests     Int
+  totalPrice Decimal
+  status     BookingStatus @default(PENDING)
+
+  userId     Int
+  roomId     Int
+
+  user       User          @relation(fields: [userId], references: [id])
+  room       Room          @relation(fields: [roomId], references: [id])
+
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+}
