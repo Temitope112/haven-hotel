@@ -1,58 +1,92 @@
-import type { NextFunction, Request, Response } from "express";
+import type {
+  NextFunction,
+  Request,
+  Response,
+} from "express";
 import jwt from "jsonwebtoken";
 
-type AuthPayload = {
+type JwtPayload = {
   userId: number;
   role: "GUEST" | "ADMIN";
 };
 
-export interface AuthenticatedRequest extends Request {
-  user?: AuthPayload;
-}
-
-export function authenticate(
-  req: AuthenticatedRequest,
+export function authenticateToken(
+  req: Request,
   res: Response,
   next: NextFunction,
 ) {
+  const authHeader =
+    req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({
+      success: false,
+      message:
+        "Authentication required.",
+    });
+  }
+
+  const [scheme, token] =
+    authHeader.split(" ");
+
+  if (
+    scheme !== "Bearer" ||
+    !token
+  ) {
+    return res.status(401).json({
+      success: false,
+      message:
+        "Invalid authentication format.",
+    });
+  }
+
+  const secret =
+    process.env.JWT_SECRET;
+
+  if (!secret) {
+    console.error(
+      "JWT_SECRET is not configured.",
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Server configuration error.",
+    });
+  }
+
   try {
-    const authorization = req.headers.authorization;
+    const decoded =
+      jwt.verify(
+        token,
+        secret,
+      ) as JwtPayload;
 
-    if (!authorization) {
-      res.status(401).json({
-        success: false,
-        message: "Authentication required",
-      });
-
-      return;
+    if (
+      !decoded.userId ||
+      !decoded.role
+    ) {
+      return res
+        .status(401)
+        .json({
+          success: false,
+          message:
+            "Invalid authentication token.",
+        });
     }
 
-    const [scheme, token] = authorization.split(" ");
-
-    if (scheme !== "Bearer" || !token) {
-      res.status(401).json({
-        success: false,
-        message: "Invalid authorization format",
-      });
-
-      return;
-    }
-
-    const jwtSecret = process.env.JWT_SECRET;
-
-    if (!jwtSecret) {
-      throw new Error("JWT_SECRET is not configured");
-    }
-
-    const decoded = jwt.verify(token, jwtSecret) as AuthPayload;
-
-    req.user = decoded;
+    req.user = {
+      userId:
+        decoded.userId,
+      role: decoded.role,
+    };
 
     next();
-  } catch (error) {
-    res.status(401).json({
+  } catch {
+    return res.status(401).json({
       success: false,
-      message: "Invalid or expired token",
+      message:
+        "Session expired or invalid.",
     });
   }
 }

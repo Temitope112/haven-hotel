@@ -5,16 +5,16 @@ import {
   getBookingById,
   getMyBookings,
 } from "../controllers/booking.controller.js";
-import { authenticate } from "../middleware/auth.middleware.js";
+import { authenticateToken } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.post("/", authenticate, createBooking);
+router.post("/", authenticateToken, createBooking);
 
-router.get("/me", authenticate, getMyBookings);
+router.get("/me", authenticateToken, getMyBookings);
 
-router.get("/:id", authenticate, getBookingById);
+router.get("/:id", authenticateToken, getBookingById);
 
-router.patch("/:id/cancel", authenticate, cancelBooking);
+router.patch("/:id/cancel", authenticateToken, cancelBooking);
 
 export default router;
