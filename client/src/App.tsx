@@ -13,6 +13,8 @@ import Login from "./pages/login";
 import Register from "./pages/Register";
 import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
+import Admin from "./pages/Admin";
+import AdminRoute from "./components/auth/AdminRoute";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -23,40 +25,19 @@ export default function App() {
 
       <main>
         <Routes>
-          <Route
-            path="/"
-            element={<Home />}
-          />
+          <Route path="/" element={<Home />} />
 
-          <Route
-            path="/rooms"
-            element={<Rooms />}
-          />
+          <Route path="/rooms" element={<Rooms />} />
 
-          <Route
-            path="/rooms/:id"
-            element={<RoomDetails />}
-          />
+          <Route path="/rooms/:id" element={<RoomDetails />} />
 
-          <Route
-            path="/experience"
-            element={<Experience />}
-          />
+          <Route path="/experience" element={<Experience />} />
 
-          <Route
-            path="/about"
-            element={<About />}
-          />
+          <Route path="/about" element={<About />} />
 
-          <Route
-            path="/login"
-            element={<Login />}
-          />
+          <Route path="/login" element={<Login />} />
 
-          <Route
-            path="/register"
-            element={<Register />}
-          />
+          <Route path="/register" element={<Register />} />
 
           <Route
             path="/account"
@@ -67,18 +48,23 @@ export default function App() {
             }
           />
           <Route
-  path="/bookings/:id"
-  element={
-    <ProtectedRoute>
-      <BookingDetails />
-    </ProtectedRoute>
-  }
-/>
-
-          <Route
-            path="*"
-            element={<NotFound />}
+            path="/bookings/:id"
+            element={
+              <ProtectedRoute>
+                <BookingDetails />
+              </ProtectedRoute>
+            }
           />
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <Admin />
+              </AdminRoute>
+            }
+          />
+
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
 

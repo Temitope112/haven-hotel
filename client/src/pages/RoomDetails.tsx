@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import {
   ArrowLeft,
@@ -31,15 +26,9 @@ import {
 import axios from "axios";
 
 import { api } from "../services/api";
-import {
-  fallbackRoomGallery,
-  roomGallery,
-} from "../data/roomGallery";
+import { fallbackRoomGallery, roomGallery } from "../data/roomGallery";
 
-import type {
-  Room,
-  RoomResponse,
-} from "../types/room";
+import type { Room, RoomResponse } from "../../../server/src/types/room";
 
 const amenities = [
   {
@@ -76,88 +65,52 @@ type BookingResponse = {
   };
 };
 
-function formatPrice(
-  price: string | number,
-) {
-  return new Intl.NumberFormat(
-    "en-NG",
-    {
-      style: "currency",
-      currency: "NGN",
-      maximumFractionDigits: 0,
-    },
-  ).format(Number(price));
+function formatPrice(price: string | number) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(Number(price));
 }
 
-function formatDateForInput(
-  date: Date,
-) {
-  const year =
-    date.getFullYear();
+function formatDateForInput(date: Date) {
+  const year = date.getFullYear();
 
-  const month = String(
-    date.getMonth() + 1,
-  ).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
 
-  const day = String(
-    date.getDate(),
-  ).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 }
 
 function getToday() {
-  return formatDateForInput(
-    new Date(),
-  );
+  return formatDateForInput(new Date());
 }
 
 function getTomorrow() {
   const date = new Date();
 
-  date.setDate(
-    date.getDate() + 1,
-  );
+  date.setDate(date.getDate() + 1);
 
-  return formatDateForInput(
-    date,
-  );
+  return formatDateForInput(date);
 }
 
-function getNextDay(
-  value: string,
-) {
-  const date = new Date(
-    `${value}T00:00:00`,
-  );
+function getNextDay(value: string) {
+  const date = new Date(`${value}T00:00:00`);
 
-  date.setDate(
-    date.getDate() + 1,
-  );
+  date.setDate(date.getDate() + 1);
 
-  return formatDateForInput(
-    date,
-  );
+  return formatDateForInput(date);
 }
 
-function isValidDateRange(
-  checkIn: string,
-  checkOut: string,
-) {
-  if (
-    !checkIn ||
-    !checkOut
-  ) {
+function isValidDateRange(checkIn: string, checkOut: string) {
+  if (!checkIn || !checkOut) {
     return false;
   }
 
-  const start = new Date(
-    `${checkIn}T00:00:00`,
-  );
+  const start = new Date(`${checkIn}T00:00:00`);
 
-  const end = new Date(
-    `${checkOut}T00:00:00`,
-  );
+  const end = new Date(`${checkOut}T00:00:00`);
 
   return end > start;
 }
@@ -165,94 +118,50 @@ function isValidDateRange(
 export default function RoomDetails() {
   const { id } = useParams();
 
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
-  const location =
-    useLocation();
+  const location = useLocation();
 
-  const [
-    searchParams,
-    setSearchParams,
-  ] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const bookingSectionRef =
-    useRef<HTMLDivElement | null>(
-      null,
-    );
+  const bookingSectionRef = useRef<HTMLDivElement | null>(null);
 
-  const [room, setRoom] =
-    useState<Room | null>(null);
+  const [room, setRoom] = useState<Room | null>(null);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const [checkIn, setCheckIn] =
-    useState("");
+  const [checkIn, setCheckIn] = useState("");
 
-  const [checkOut, setCheckOut] =
-    useState("");
+  const [checkOut, setCheckOut] = useState("");
 
-  const [guests, setGuests] =
-    useState(1);
+  const [guests, setGuests] = useState(1);
 
-  const [
-    bookingLoading,
-    setBookingLoading,
-  ] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState(false);
 
-  const [
-    bookingError,
-    setBookingError,
-  ] = useState("");
+  const [bookingError, setBookingError] = useState("");
 
-  const [
-    bookingSuccess,
-    setBookingSuccess,
-  ] = useState("");
+  const [bookingSuccess, setBookingSuccess] = useState("");
 
-  const requestedCheckIn =
-    searchParams.get(
-      "checkIn",
-    ) || "";
+  const requestedCheckIn = searchParams.get("checkIn") || "";
 
-  const requestedCheckOut =
-    searchParams.get(
-      "checkOut",
-    ) || "";
+  const requestedCheckOut = searchParams.get("checkOut") || "";
 
-  const requestedGuests =
-    Number(
-      searchParams.get(
-        "guests",
-      ),
-    ) || 0;
+  const requestedGuests = Number(searchParams.get("guests")) || 0;
 
   async function fetchRoom() {
     try {
       setLoading(true);
       setError("");
 
-      const response =
-        await api.get<RoomResponse>(
-          `/api/rooms/${id}`,
-        );
+      const response = await api.get<RoomResponse>(`/api/rooms/${id}`);
 
-      setRoom(
-        response.data.room,
-      );
+      setRoom(response.data.room);
     } catch (error) {
-      console.error(
-        "Failed to fetch room:",
-        error,
-      );
+      console.error("Failed to fetch room:", error);
 
-      setError(
-        "We couldn't find this room right now.",
-      );
+      setError("We couldn't find this room right now.");
     } finally {
       setLoading(false);
     }
@@ -271,161 +180,77 @@ export default function RoomDetails() {
       return;
     }
 
-    const today =
-      getToday();
+    const today = getToday();
 
-    if (
-      requestedCheckIn &&
-      requestedCheckIn >= today
-    ) {
-      setCheckIn(
-        requestedCheckIn,
-      );
+    if (requestedCheckIn && requestedCheckIn >= today) {
+      setCheckIn(requestedCheckIn);
     }
 
     if (
       requestedCheckIn &&
       requestedCheckOut &&
       requestedCheckIn >= today &&
-      isValidDateRange(
-        requestedCheckIn,
-        requestedCheckOut,
-      )
+      isValidDateRange(requestedCheckIn, requestedCheckOut)
     ) {
-      setCheckOut(
-        requestedCheckOut,
-      );
+      setCheckOut(requestedCheckOut);
     }
 
-    if (
-      requestedGuests >= 1 &&
-      requestedGuests <=
-        room.capacity
-    ) {
-      setGuests(
-        requestedGuests,
-      );
+    if (requestedGuests >= 1 && requestedGuests <= room.capacity) {
+      setGuests(requestedGuests);
     }
-  }, [
-    room,
-    requestedCheckIn,
-    requestedCheckOut,
-    requestedGuests,
-  ]);
+  }, [room, requestedCheckIn, requestedCheckOut, requestedGuests]);
 
-  const numberOfNights =
-    useMemo(() => {
-      if (
-        !checkIn ||
-        !checkOut
-      ) {
-        return 0;
-      }
+  const numberOfNights = useMemo(() => {
+    if (!checkIn || !checkOut) {
+      return 0;
+    }
 
-      const start =
-        new Date(
-          `${checkIn}T00:00:00`,
-        );
+    const start = new Date(`${checkIn}T00:00:00`);
 
-      const end =
-        new Date(
-          `${checkOut}T00:00:00`,
-        );
+    const end = new Date(`${checkOut}T00:00:00`);
 
-      const difference =
-        end.getTime() -
-        start.getTime();
+    const difference = end.getTime() - start.getTime();
 
-      if (
-        difference <= 0
-      ) {
-        return 0;
-      }
+    if (difference <= 0) {
+      return 0;
+    }
 
-      return Math.ceil(
-        difference /
-          (1000 *
-            60 *
-            60 *
-            24),
-      );
-    }, [
-      checkIn,
-      checkOut,
-    ]);
+    return Math.ceil(difference / (1000 * 60 * 60 * 24));
+  }, [checkIn, checkOut]);
 
-  const estimatedTotal =
-    useMemo(() => {
-      if (
-        !room ||
-        numberOfNights === 0
-      ) {
-        return 0;
-      }
+  const estimatedTotal = useMemo(() => {
+    if (!room || numberOfNights === 0) {
+      return 0;
+    }
 
-      return (
-        Number(room.price) *
-        numberOfNights
-      );
-    }, [
-      room,
-      numberOfNights,
-    ]);
+    return Number(room.price) * numberOfNights;
+  }, [room, numberOfNights]);
 
-  function updateSearch(
-    values: {
-      checkIn?: string;
-      checkOut?: string;
-      guests?: number;
-    },
-  ) {
-    const next =
-      new URLSearchParams(
-        searchParams,
-      );
+  function updateSearch(values: {
+    checkIn?: string;
+    checkOut?: string;
+    guests?: number;
+  }) {
+    const next = new URLSearchParams(searchParams);
 
-    if (
-      values.checkIn !==
-      undefined
-    ) {
+    if (values.checkIn !== undefined) {
       if (values.checkIn) {
-        next.set(
-          "checkIn",
-          values.checkIn,
-        );
+        next.set("checkIn", values.checkIn);
       } else {
-        next.delete(
-          "checkIn",
-        );
+        next.delete("checkIn");
       }
     }
 
-    if (
-      values.checkOut !==
-      undefined
-    ) {
+    if (values.checkOut !== undefined) {
       if (values.checkOut) {
-        next.set(
-          "checkOut",
-          values.checkOut,
-        );
+        next.set("checkOut", values.checkOut);
       } else {
-        next.delete(
-          "checkOut",
-        );
+        next.delete("checkOut");
       }
     }
 
-    if (
-      values.guests !==
-      undefined
-    ) {
-      next.set(
-        "guests",
-        String(
-          values.guests,
-        ),
-      );
+    if (values.guests !== undefined) {
+      next.set("guests", String(values.guests));
     }
 
     setSearchParams(next, {
@@ -433,24 +258,16 @@ export default function RoomDetails() {
     });
   }
 
-  function handleCheckInChange(
-    value: string,
-  ) {
+  function handleCheckInChange(value: string) {
     setCheckIn(value);
     setBookingError("");
     setBookingSuccess("");
 
-    let nextCheckOut =
-      checkOut;
+    let nextCheckOut = checkOut;
 
     if (
       checkOut &&
-      new Date(
-        `${checkOut}T00:00:00`,
-      ) <=
-        new Date(
-          `${value}T00:00:00`,
-        )
+      new Date(`${checkOut}T00:00:00`) <= new Date(`${value}T00:00:00`)
     ) {
       nextCheckOut = "";
       setCheckOut("");
@@ -458,14 +275,11 @@ export default function RoomDetails() {
 
     updateSearch({
       checkIn: value,
-      checkOut:
-        nextCheckOut,
+      checkOut: nextCheckOut,
     });
   }
 
-  function handleCheckOutChange(
-    value: string,
-  ) {
+  function handleCheckOutChange(value: string) {
     setCheckOut(value);
     setBookingError("");
     setBookingSuccess("");
@@ -475,9 +289,7 @@ export default function RoomDetails() {
     });
   }
 
-  function handleGuestsChange(
-    value: number,
-  ) {
+  function handleGuestsChange(value: number) {
     setGuests(value);
     setBookingError("");
     setBookingSuccess("");
@@ -495,37 +307,24 @@ export default function RoomDetails() {
     setBookingError("");
     setBookingSuccess("");
 
-    if (
-      !checkIn ||
-      !checkOut
-    ) {
-      setBookingError(
-        "Select your check-in and check-out dates.",
-      );
+    if (!checkIn || !checkOut) {
+      setBookingError("Select your check-in and check-out dates.");
 
       return;
     }
 
-    if (
-      numberOfNights <= 0
-    ) {
-      setBookingError(
-        "Check-out must be after check-in.",
-      );
+    if (numberOfNights <= 0) {
+      setBookingError("Check-out must be after check-in.");
 
       return;
     }
 
-    const token =
-      localStorage.getItem(
-        "haven_token",
-      );
+    const token = localStorage.getItem("haven_token");
 
     if (!token) {
       navigate("/login", {
         state: {
-          from:
-            `${location.pathname}${location.search}`,
+          from: `${location.pathname}${location.search}`,
         },
       });
 
@@ -535,107 +334,63 @@ export default function RoomDetails() {
     try {
       setBookingLoading(true);
 
-      const response =
-        await api.post<BookingResponse>(
-          "/api/bookings",
-          {
-            roomId: room.id,
-            checkIn,
-            checkOut,
-            guests,
+      const response = await api.post<BookingResponse>(
+        "/api/bookings",
+        {
+          roomId: room.id,
+          checkIn,
+          checkOut,
+          guests,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-            },
-          },
-        );
+        },
+      );
 
       setBookingSuccess(
-        response.data
-          .message ||
-          "Booking created successfully.",
+        response.data.message || "Booking created successfully.",
       );
-    } catch (
-      error: unknown
-    ) {
-      console.error(
-        "Booking failed:",
-        error,
-      );
+    } catch (error: unknown) {
+      console.error("Booking failed:", error);
 
-      if (
-        axios.isAxiosError(
-          error,
-        )
-      ) {
+      if (axios.isAxiosError(error)) {
         setBookingError(
-          error.response?.data
-            ?.message ||
-            "We couldn't complete your booking.",
+          error.response?.data?.message || "We couldn't complete your booking.",
         );
       } else {
-        setBookingError(
-          "We couldn't complete your booking.",
-        );
+        setBookingError("We couldn't complete your booking.");
       }
     } finally {
-      setBookingLoading(
-        false,
-      );
+      setBookingLoading(false);
     }
   }
 
   function scrollToBooking() {
-    bookingSectionRef.current
-      ?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+    bookingSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   }
 
   if (loading) {
-    return (
-      <RoomDetailsLoading />
-    );
+    return <RoomDetailsLoading />;
   }
 
-  if (
-    error ||
-    !room
-  ) {
-    return (
-      <RoomDetailsError
-        message={error}
-        onRetry={fetchRoom}
-      />
-    );
+  if (error || !room) {
+    return <RoomDetailsError message={error} onRetry={fetchRoom} />;
   }
 
-  const gallery =
-    roomGallery[room.id] ||
-    fallbackRoomGallery;
+  const gallery = roomGallery[room.id] || fallbackRoomGallery;
 
-  const heroImage =
-    gallery[0] ||
-    room.imageUrl ||
-    fallbackRoomGallery[0];
+  const heroImage = gallery[0] || room.imageUrl || fallbackRoomGallery[0];
 
-  const detailImageOne =
-    gallery[1] ||
-    room.imageUrl ||
-    fallbackRoomGallery[1];
+  const detailImageOne = gallery[1] || room.imageUrl || fallbackRoomGallery[1];
 
-  const detailImageTwo =
-    gallery[2] ||
-    room.imageUrl ||
-    fallbackRoomGallery[2];
+  const detailImageTwo = gallery[2] || room.imageUrl || fallbackRoomGallery[2];
 
-  const roomsBackLink =
-    location.search
-      ? `/rooms${location.search}`
-      : "/rooms";
+  const roomsBackLink = location.search ? `/rooms${location.search}` : "/rooms";
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-[#151613] text-[#f5f1e8]">
@@ -650,12 +405,7 @@ export default function RoomDetails() {
           }}
           transition={{
             duration: 1.5,
-            ease: [
-              0.22,
-              1,
-              0.36,
-              1,
-            ],
+            ease: [0.22, 1, 0.36, 1],
           }}
           className="absolute inset-0"
         >
@@ -673,27 +423,16 @@ export default function RoomDetails() {
         <div className="relative z-10 flex min-h-[560px] items-end sm:min-h-[640px] lg:min-h-[82svh]">
           <div className="w-full px-5 pb-10 pt-32 sm:px-6 sm:pb-12 md:px-8 lg:px-12 lg:pb-16">
             <Link
-              to={
-                roomsBackLink
-              }
+              to={roomsBackLink}
               className="inline-flex min-h-10 items-center gap-2 text-[11px] text-white/60 transition hover:text-white"
             >
-              <ArrowLeft
-                size={13}
-              />
-
+              <ArrowLeft size={13} />
               Rooms & Suites
             </Link>
 
             <div className="mt-6">
               <p className="text-[9px] font-medium uppercase tracking-[0.22em] text-white/45">
-                Room{" "}
-                {String(
-                  room.id,
-                ).padStart(
-                  2,
-                  "0",
-                )}
+                Room {String(room.id).padStart(2, "0")}
               </p>
 
               <h1 className="display-font mt-3 max-w-[320px] break-words text-[clamp(3rem,13vw,4.4rem)] leading-[0.85] tracking-[-0.055em] sm:max-w-[520px] sm:text-[clamp(4rem,10vw,6rem)] lg:max-w-5xl lg:text-[clamp(5rem,8vw,8rem)]">
@@ -702,9 +441,7 @@ export default function RoomDetails() {
 
               <div className="mt-6 lg:absolute lg:bottom-16 lg:right-12 lg:mt-0 lg:text-right">
                 <p className="text-xl font-medium sm:text-2xl">
-                  {formatPrice(
-                    room.price,
-                  )}
+                  {formatPrice(room.price)}
                 </p>
 
                 <p className="mt-1 text-[9px] uppercase tracking-[0.16em] text-white/35">
@@ -742,39 +479,24 @@ export default function RoomDetails() {
                   }}
                   className="display-font max-w-3xl break-words text-[clamp(1.9rem,7.5vw,3rem)] leading-[1.03] tracking-[-0.04em] text-white/90"
                 >
-                  {
-                    room.description
-                  }
+                  {room.description}
                 </motion.p>
 
                 <div className="mt-8 grid grid-cols-2 gap-4 sm:max-w-md">
                   <div className="border-t border-white/10 pt-4">
-                    <Users
-                      size={17}
-                      className="text-[#c9b58d]"
-                    />
+                    <Users size={17} className="text-[#c9b58d]" />
 
                     <p className="mt-3 text-xs leading-5 text-white/45">
-                      Up to{" "}
-                      {
-                        room.capacity
-                      }{" "}
-                      {room.capacity ===
-                      1
-                        ? "guest"
-                        : "guests"}
+                      Up to {room.capacity}{" "}
+                      {room.capacity === 1 ? "guest" : "guests"}
                     </p>
                   </div>
 
                   <div className="border-t border-white/10 pt-4">
-                    <Maximize2
-                      size={17}
-                      className="text-[#c9b58d]"
-                    />
+                    <Maximize2 size={17} className="text-[#c9b58d]" />
 
                     <p className="mt-3 text-xs leading-5 text-white/45">
-                      Generous
-                      space
+                      Generous space
                     </p>
                   </div>
                 </div>
@@ -787,56 +509,38 @@ export default function RoomDetails() {
                 </p>
 
                 <div className="mt-6 grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-3 sm:gap-x-7">
-                  {amenities.map(
-                    (
-                      amenity,
-                      index,
-                    ) => {
-                      const Icon =
-                        amenity.icon;
+                  {amenities.map((amenity, index) => {
+                    const Icon = amenity.icon;
 
-                      return (
-                        <motion.div
-                          key={
-                            amenity.label
-                          }
-                          initial={{
-                            opacity: 0,
-                            y: 14,
-                          }}
-                          whileInView={{
-                            opacity: 1,
-                            y: 0,
-                          }}
-                          viewport={{
-                            once: true,
-                            amount: 0.3,
-                          }}
-                          transition={{
-                            duration:
-                              0.45,
-                            delay:
-                              index *
-                              0.04,
-                          }}
-                          className="min-w-0 border-t border-white/10 pt-4"
-                        >
-                          <Icon
-                            size={
-                              18
-                            }
-                            className="text-[#c9b58d]"
-                          />
+                    return (
+                      <motion.div
+                        key={amenity.label}
+                        initial={{
+                          opacity: 0,
+                          y: 14,
+                        }}
+                        whileInView={{
+                          opacity: 1,
+                          y: 0,
+                        }}
+                        viewport={{
+                          once: true,
+                          amount: 0.3,
+                        }}
+                        transition={{
+                          duration: 0.45,
+                          delay: index * 0.04,
+                        }}
+                        className="min-w-0 border-t border-white/10 pt-4"
+                      >
+                        <Icon size={18} className="text-[#c9b58d]" />
 
-                          <p className="mt-3 break-words text-xs leading-5 text-white/50 sm:text-sm">
-                            {
-                              amenity.label
-                            }
-                          </p>
-                        </motion.div>
-                      );
-                    },
-                  )}
+                        <p className="mt-3 break-words text-xs leading-5 text-white/50 sm:text-sm">
+                          {amenity.label}
+                        </p>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -848,15 +552,12 @@ export default function RoomDetails() {
                   </p>
 
                   <h2 className="display-font mt-3 text-3xl tracking-[-0.045em] sm:text-4xl">
-                    A closer
-                    look.
+                    A closer look.
                   </h2>
 
                   <p className="mt-4 max-w-md text-xs leading-6 text-white/35">
-                    Details selected
-                    to make the room
-                    feel considered
-                    from every angle.
+                    Details selected to make the room feel considered from every
+                    angle.
                   </p>
                 </div>
 
@@ -886,9 +587,7 @@ export default function RoomDetails() {
                       transition={{
                         duration: 0.6,
                       }}
-                      src={
-                        detailImageOne
-                      }
+                      src={detailImageOne}
                       alt={`${room.name} detail`}
                       className="aspect-[4/3] w-full object-cover md:aspect-[4/5]"
                     />
@@ -920,9 +619,7 @@ export default function RoomDetails() {
                       transition={{
                         duration: 0.6,
                       }}
-                      src={
-                        detailImageTwo
-                      }
+                      src={detailImageTwo}
                       alt={`${room.name} second detail`}
                       className="aspect-[4/3] w-full object-cover md:aspect-[4/5]"
                     />
@@ -950,30 +647,17 @@ export default function RoomDetails() {
                   }}
                   className="flex min-h-[300px] flex-col justify-between rounded-[22px] bg-[#4d5545] p-6 sm:min-h-[360px] sm:rounded-[26px] sm:p-8 md:p-10"
                 >
-                  <Sparkles
-                    size={20}
-                    className="text-white/60"
-                  />
+                  <Sparkles size={20} className="text-white/60" />
 
                   <div className="mt-16 sm:mt-20">
                     <h2 className="display-font max-w-xl text-[clamp(2.4rem,8vw,4.2rem)] leading-[0.94] tracking-[-0.05em]">
-                      Made for the
-                      hours you
-                      don't plan.
+                      Made for the hours you don't plan.
                     </h2>
 
                     <p className="mt-6 max-w-lg text-sm leading-7 text-white/55">
-                      Morning coffee
-                      in bed. An
-                      afternoon with
-                      the curtains
-                      drawn. One more
-                      chapter before
-                      dinner. This room
-                      is designed
-                      around the time
-                      that belongs only
-                      to you.
+                      Morning coffee in bed. An afternoon with the curtains
+                      drawn. One more chapter before dinner. This room is
+                      designed around the time that belongs only to you.
                     </p>
                   </div>
                 </motion.div>
@@ -982,9 +666,7 @@ export default function RoomDetails() {
 
             {/* BOOKING */}
             <aside
-              ref={
-                bookingSectionRef
-              }
+              ref={bookingSectionRef}
               className="min-w-0 scroll-mt-28 lg:relative"
             >
               <div className="lg:sticky lg:top-28">
@@ -992,36 +674,25 @@ export default function RoomDetails() {
                   <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/10 pb-5">
                     <div className="min-w-0">
                       <p className="text-xl font-medium sm:text-2xl">
-                        {formatPrice(
-                          room.price,
-                        )}
+                        {formatPrice(room.price)}
                       </p>
 
-                      <p className="mt-1 text-xs text-white/35">
-                        per night
-                      </p>
+                      <p className="mt-1 text-xs text-white/35">per night</p>
                     </div>
 
                     <div className="flex shrink-0 items-center gap-2 text-[11px] text-white/40">
-                      <ShieldCheck
-                        size={15}
-                      />
-
+                      <ShieldCheck size={15} />
                       Secure booking
                     </div>
                   </div>
 
                   {/* SEARCH PREFILL NOTICE */}
-                  {requestedCheckIn &&
-                    requestedCheckOut && (
-                      <div className="mt-5 rounded-[15px] border border-[#c9b58d]/15 bg-[#c9b58d]/5 px-4 py-3 text-xs leading-5 text-[#d8c8a7]">
-                        Your selected
-                        dates have been
-                        carried over.
-                        You can adjust
-                        them below.
-                      </div>
-                    )}
+                  {requestedCheckIn && requestedCheckOut && (
+                    <div className="mt-5 rounded-[15px] border border-[#c9b58d]/15 bg-[#c9b58d]/5 px-4 py-3 text-xs leading-5 text-[#d8c8a7]">
+                      Your selected dates have been carried over. You can adjust
+                      them below.
+                    </div>
+                  )}
 
                   {/* DATES */}
                   <div className="mt-5 grid gap-3 xl:grid-cols-2">
@@ -1032,20 +703,10 @@ export default function RoomDetails() {
 
                       <input
                         type="date"
-                        value={
-                          checkIn
-                        }
-                        min={
-                          getToday()
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          handleCheckInChange(
-                            event
-                              .target
-                              .value,
-                          )
+                        value={checkIn}
+                        min={getToday()}
+                        onChange={(event) =>
+                          handleCheckInChange(event.target.value)
                         }
                         className="mt-2 block w-full min-w-0 max-w-full bg-transparent text-base text-white outline-none [color-scheme:dark]"
                       />
@@ -1058,24 +719,10 @@ export default function RoomDetails() {
 
                       <input
                         type="date"
-                        value={
-                          checkOut
-                        }
-                        min={
-                          checkIn
-                            ? getNextDay(
-                                checkIn,
-                              )
-                            : getTomorrow()
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          handleCheckOutChange(
-                            event
-                              .target
-                              .value,
-                          )
+                        value={checkOut}
+                        min={checkIn ? getNextDay(checkIn) : getTomorrow()}
+                        onChange={(event) =>
+                          handleCheckOutChange(event.target.value)
                         }
                         className="mt-2 block w-full min-w-0 max-w-full bg-transparent text-base text-white outline-none [color-scheme:dark]"
                       />
@@ -1089,92 +736,44 @@ export default function RoomDetails() {
                     </span>
 
                     <select
-                      value={
-                        guests
-                      }
-                      onChange={(
-                        event,
-                      ) =>
-                        handleGuestsChange(
-                          Number(
-                            event
-                              .target
-                              .value,
-                          ),
-                        )
+                      value={guests}
+                      onChange={(event) =>
+                        handleGuestsChange(Number(event.target.value))
                       }
                       className="mt-2 block w-full min-w-0 max-w-full bg-transparent text-base text-white outline-none [&>option]:text-black"
                     >
                       {Array.from(
                         {
-                          length:
-                            room.capacity,
+                          length: room.capacity,
                         },
-                        (
-                          _,
-                          index,
-                        ) =>
-                          index + 1,
-                      ).map(
-                        (
-                          count,
-                        ) => (
-                          <option
-                            key={
-                              count
-                            }
-                            value={
-                              count
-                            }
-                          >
-                            {
-                              count
-                            }{" "}
-                            {count ===
-                            1
-                              ? "Guest"
-                              : "Guests"}
-                          </option>
-                        ),
-                      )}
+                        (_, index) => index + 1,
+                      ).map((count) => (
+                        <option key={count} value={count}>
+                          {count} {count === 1 ? "Guest" : "Guests"}
+                        </option>
+                      ))}
                     </select>
                   </label>
 
                   {/* PRICE */}
-                  {numberOfNights >
-                    0 && (
+                  {numberOfNights > 0 && (
                     <div className="mt-6 space-y-3 border-t border-white/10 pt-5 text-sm">
                       <div className="flex flex-wrap justify-between gap-3 text-white/45">
                         <span className="break-words">
-                          {formatPrice(
-                            room.price,
-                          )}{" "}
-                          ×{" "}
-                          {
-                            numberOfNights
-                          }{" "}
-                          {numberOfNights ===
-                          1
-                            ? "night"
-                            : "nights"}
+                          {formatPrice(room.price)} × {numberOfNights}{" "}
+                          {numberOfNights === 1 ? "night" : "nights"}
                         </span>
 
                         <span className="shrink-0">
-                          {formatPrice(
-                            estimatedTotal,
-                          )}
+                          {formatPrice(estimatedTotal)}
                         </span>
                       </div>
 
                       <div className="flex items-center justify-between gap-4 border-t border-white/10 pt-4">
-                        <span className="font-medium">
-                          Total
-                        </span>
+                        <span className="font-medium">Total</span>
 
                         <span className="text-base font-medium sm:text-lg">
-                          {formatPrice(
-                            estimatedTotal,
-                          )}
+                          {formatPrice(estimatedTotal)}
                         </span>
                       </div>
                     </div>
@@ -1182,41 +781,26 @@ export default function RoomDetails() {
 
                   {bookingError && (
                     <div className="mt-5 break-words rounded-[16px] border border-red-400/15 bg-red-400/5 px-4 py-3 text-sm leading-6 text-red-200">
-                      {
-                        bookingError
-                      }
+                      {bookingError}
                     </div>
                   )}
 
                   {bookingSuccess && (
                     <div className="mt-5 flex gap-3 rounded-[16px] border border-emerald-400/15 bg-emerald-400/5 px-4 py-3 text-sm leading-6 text-emerald-100">
-                      <Check
-                        size={17}
-                        className="mt-0.5 shrink-0"
-                      />
+                      <Check size={17} className="mt-0.5 shrink-0" />
 
-                      <span className="break-words">
-                        {
-                          bookingSuccess
-                        }
-                      </span>
+                      <span className="break-words">{bookingSuccess}</span>
                     </div>
                   )}
 
                   <button
                     type="button"
-                    disabled={
-                      bookingLoading
-                    }
-                    onClick={
-                      handleBooking
-                    }
+                    disabled={bookingLoading}
+                    onClick={handleBooking}
                     className="group mt-6 flex min-h-14 w-full items-center justify-between gap-4 rounded-full bg-[#f5f1e8] px-5 text-sm font-medium text-[#171714] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <span className="truncate">
-                      {bookingLoading
-                        ? "Booking..."
-                        : "Reserve this room"}
+                      {bookingLoading ? "Booking..." : "Reserve this room"}
                     </span>
 
                     {bookingLoading ? (
@@ -1233,11 +817,8 @@ export default function RoomDetails() {
                   </button>
 
                   <p className="mt-4 px-2 text-center text-[10px] leading-5 text-white/30">
-                    Your room is only
-                    reserved after the
-                    booking has been
-                    successfully
-                    confirmed.
+                    Your room is only reserved after the booking has been
+                    successfully confirmed.
                   </p>
                 </div>
               </div>
@@ -1251,22 +832,13 @@ export default function RoomDetails() {
         <div className="mx-auto flex w-full items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">
-              {formatPrice(
-                room.price,
-              )}
+              {formatPrice(room.price)}
             </p>
 
             {numberOfNights > 0 ? (
               <p className="mt-0.5 text-[9px] uppercase tracking-[0.14em] text-white/30">
-                {numberOfNights}{" "}
-                {numberOfNights ===
-                1
-                  ? "night"
-                  : "nights"}{" "}
-                ·{" "}
-                {formatPrice(
-                  estimatedTotal,
-                )}
+                {numberOfNights} {numberOfNights === 1 ? "night" : "nights"} ·{" "}
+                {formatPrice(estimatedTotal)}
               </p>
             ) : (
               <p className="mt-0.5 text-[9px] uppercase tracking-[0.14em] text-white/30">
@@ -1277,14 +849,10 @@ export default function RoomDetails() {
 
           <button
             type="button"
-            onClick={
-              scrollToBooking
-            }
+            onClick={scrollToBooking}
             className="min-h-11 shrink-0 rounded-full bg-[#f5f1e8] px-5 text-sm font-medium text-[#171714]"
           >
-            {numberOfNights > 0
-              ? "Reserve"
-              : "Check dates"}
+            {numberOfNights > 0 ? "Reserve" : "Check dates"}
           </button>
         </div>
       </div>
@@ -1327,10 +895,7 @@ type RoomDetailsErrorProps = {
   onRetry: () => void;
 };
 
-function RoomDetailsError({
-  message,
-  onRetry,
-}: RoomDetailsErrorProps) {
+function RoomDetailsError({ message, onRetry }: RoomDetailsErrorProps) {
   return (
     <div className="flex min-h-screen w-full items-center justify-center overflow-x-hidden bg-[#151613] px-5 text-center text-white">
       <div className="max-w-xl">
