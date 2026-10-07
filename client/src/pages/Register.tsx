@@ -63,8 +63,23 @@ export default function Register() {
   const [error, setError] =
     useState("");
 
+  const hasMinimumLength =
+    password.length >= 8;
+
+  const hasUppercase =
+    /[A-Z]/.test(password);
+
+  const hasLowercase =
+    /[a-z]/.test(password);
+
+  const hasNumber =
+    /\d/.test(password);
+
   const passwordValid =
-    password.length >= 6;
+    hasMinimumLength &&
+    hasUppercase &&
+    hasLowercase &&
+    hasNumber;
 
   const formComplete =
     name.trim() !== "" &&
@@ -97,11 +112,11 @@ export default function Register() {
       /*
         Registration creates the account.
 
-        We then immediately sign the
-        new guest in so they don't have
-        to enter the same credentials
-        again.
+        We immediately sign the new guest
+        in so they do not need to enter
+        the same credentials again.
       */
+
       const loginData =
         await loginUser({
           email: email.trim(),
@@ -109,17 +124,17 @@ export default function Register() {
         });
 
       /*
-        saveAuth:
-        persists token/user for refreshes.
+        The JWT itself is stored by the
+        backend in an httpOnly cookie.
 
-        setUser:
-        updates React immediately so
-        Navbar, ProtectedRoute, etc.
-        know the user is authenticated.
+        The frontend stores only:
+        - the user object
+        - the CSRF token
       */
+
       saveAuth(
-        loginData.token,
         loginData.user,
+        loginData.csrfToken,
       );
 
       setUser(
@@ -301,7 +316,7 @@ export default function Register() {
                       }
                     }}
                     autoComplete="new-password"
-                    placeholder="At least 6 characters"
+                    placeholder="Create a strong password"
                     className="h-14 w-full min-w-0 rounded-[16px] border border-white/10 bg-white/[0.025] px-4 pr-12 text-base text-white outline-none transition placeholder:text-white/20 focus:border-white/25 sm:text-sm"
                   />
 
@@ -334,30 +349,35 @@ export default function Register() {
                   </button>
                 </div>
 
-                {/* PASSWORD CHECK */}
-                <div className="mt-3 flex items-center gap-2">
-                  <span
-                    className={`flex size-4 shrink-0 items-center justify-center rounded-full transition ${
-                      passwordValid
-                        ? "bg-[#c9b58d] text-black"
-                        : "border border-white/15 text-transparent"
-                    }`}
-                  >
-                    <Check
-                      size={10}
-                    />
-                  </span>
+                {/* PASSWORD CHECKS */}
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <PasswordCheck
+                    passed={
+                      hasMinimumLength
+                    }
+                    label="At least 8 characters"
+                  />
 
-                  <span
-                    className={`text-xs transition ${
-                      passwordValid
-                        ? "text-white/55"
-                        : "text-white/35"
-                    }`}
-                  >
-                    At least 6
-                    characters
-                  </span>
+                  <PasswordCheck
+                    passed={
+                      hasUppercase
+                    }
+                    label="One uppercase letter"
+                  />
+
+                  <PasswordCheck
+                    passed={
+                      hasLowercase
+                    }
+                    label="One lowercase letter"
+                  />
+
+                  <PasswordCheck
+                    passed={
+                      hasNumber
+                    }
+                    label="One number"
+                  />
                 </div>
               </label>
 
@@ -411,6 +431,7 @@ export default function Register() {
             <p className="mt-7 text-center text-sm leading-6 text-white/40">
               Already have an
               account?{" "}
+
               <Link
                 to="/login"
                 state={{
@@ -450,6 +471,40 @@ export default function Register() {
           </div>
         </section>
       </div>
+    </div>
+  );
+}
+
+function PasswordCheck({
+  passed,
+  label,
+}: {
+  passed: boolean;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className={`flex size-4 shrink-0 items-center justify-center rounded-full transition ${
+          passed
+            ? "bg-[#c9b58d] text-black"
+            : "border border-white/15 text-transparent"
+        }`}
+      >
+        <Check
+          size={10}
+        />
+      </span>
+
+      <span
+        className={`text-xs transition ${
+          passed
+            ? "text-white/55"
+            : "text-white/35"
+        }`}
+      >
+        {label}
+      </span>
     </div>
   );
 }

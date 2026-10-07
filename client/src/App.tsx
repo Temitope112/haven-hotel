@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router";
+import { Route, Routes, useLocation } from "react-router";
 
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
@@ -14,14 +14,21 @@ import Register from "./pages/Register";
 import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import AdminBookings from "./pages/AdminBooking";
+import AdminRooms from "./pages/AdminRooms";
+
 import AdminRoute from "./components/auth/AdminRoute";
-
+import AdminLayout from "./components/admin/AdminLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-
+import AdminUsers from "./pages/AdminUsers";
 export default function App() {
+  const location = useLocation();
+
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
   return (
     <>
-      <Navbar />
+      {!isAdminRoute && <Navbar />}
 
       <main>
         <Routes>
@@ -47,6 +54,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/bookings/:id"
             element={
@@ -55,20 +63,29 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* ADMIN AREA */}
           <Route
             path="/admin"
             element={
               <AdminRoute>
-                <Admin />
+                <AdminLayout />
               </AdminRoute>
             }
-          />
+          >
+            <Route index element={<Admin />} />
+
+            <Route path="bookings" element={<AdminBookings />} />
+
+            <Route path="rooms" element={<AdminRooms />} />
+            <Route path="users" element={<AdminUsers />} />
+          </Route>
 
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
 
-      <Footer />
+      {!isAdminRoute && <Footer />}
     </>
   );
 }

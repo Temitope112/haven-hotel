@@ -38,9 +38,6 @@ export default function Login() {
       | LocationState
       | null;
 
-  const redirectTo =
-    state?.from || "/account";
-
   const [email, setEmail] =
     useState("");
 
@@ -81,15 +78,14 @@ export default function Login() {
 
       const data =
         await loginUser({
-          email:
-            email.trim(),
+          email: email.trim(),
           password,
         });
 
       saveAuth(
-        data.token,
-        data.user,
-      );
+  data.user,
+  data.csrfToken,
+);
 
       /*
         saveAuth() keeps the session
@@ -99,14 +95,35 @@ export default function Login() {
         so the Navbar and protected pages
         know the user has signed in.
       */
+
       setUser(data.user);
 
-      navigate(
-        redirectTo,
-        {
-          replace: true,
-        },
-      );
+      /*
+        Redirect rules:
+
+        1. If the user was sent to login
+           from a protected page, return
+           them to that page.
+
+        2. Otherwise, admins go to the
+           admin dashboard.
+
+        3. Regular guests go to account.
+      */
+
+     const redirectTo =
+  data.user.role === "ADMIN"
+    ? state?.from?.startsWith("/admin")
+      ? state.from
+      : "/admin"
+    : state?.from &&
+        !state.from.startsWith("/admin")
+      ? state.from
+      : "/account";
+
+navigate(redirectTo, {
+  replace: true,
+});
     } catch (
       error: unknown
     ) {
@@ -360,6 +377,7 @@ export default function Login() {
             {/* REGISTER */}
             <p className="mt-7 text-center text-sm leading-6 text-white/40">
               New to Haven?{" "}
+
               <Link
                 to="/register"
                 state={{

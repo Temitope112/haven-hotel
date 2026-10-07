@@ -3,40 +3,30 @@ import type {
   Request,
   Response,
 } from "express";
+
 import jwt from "jsonwebtoken";
+
+import { prisma } from "../lib/prisma.js";
 
 type JwtPayload = {
   userId: number;
-  role: "GUEST" | "ADMIN";
+  csrfToken?: string;
 };
 
-export function authenticateToken(
+export async function authenticateToken(
   req: Request,
   res: Response,
   next: NextFunction,
 ) {
-  const authHeader =
-    req.headers.authorization;
+  const token =
+    req.cookies
+      ?.haven_token;
 
-  if (!authHeader) {
+  if (!token) {
     return res.status(401).json({
       success: false,
       message:
         "Authentication required.",
-    });
-  }
-
-  const [scheme, token] =
-    authHeader.split(" ");
-
-  if (
-    scheme !== "Bearer" ||
-    !token
-  ) {
-    return res.status(401).json({
-      success: false,
-      message:
-        "Invalid authentication format.",
     });
   }
 
@@ -51,7 +41,7 @@ export function authenticateToken(
     return res.status(500).json({
       success: false,
       message:
-        "Server configuration error.",
+        "Server authentication configuration error.",
     });
   }
 
@@ -62,31 +52,67 @@ export function authenticateToken(
         secret,
       ) as JwtPayload;
 
-    if (
-      !decoded.userId ||
-      !decoded.role
-    ) {
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message:
-            "Invalid authentication token.",
-        });
+    if (!decoded.userId) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Invalid authentication token.",
+      });
+    }
+
+    const user =
+      await prisma.user.findUnique({
+        where: {
+          id:
+            decoded.userId,
+        },
+
+        select: {
+          id: true,
+          role: true,
+        },
+      });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "User account no longer exists.",
+      });
     }
 
     req.user = {
       userId:
-        decoded.userId,
-      role: decoded.role,
+        user.id,
+
+      role:
+        user.role,
     };
 
+    /*
+      Make the CSRF value available
+      for the CSRF middleware.
+    */
+    res.locals.csrfToken =
+      decoded.csrfToken;
+
     next();
-  } catch {
+  } catch (error) {
+    if (
+      error instanceof
+      jwt.TokenExpiredError
+    ) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Session expired. Please sign in again.",
+      });
+    }
+
     return res.status(401).json({
       success: false,
       message:
-        "Session expired or invalid.",
+        "Invalid authentication token.",
     });
   }
 }
