@@ -2,24 +2,12 @@ import { useState } from "react";
 import type { SubmitEvent } from "react";
 
 import { motion } from "motion/react";
-import {
-  ArrowRight,
-  Eye,
-  EyeOff,
-  LoaderCircle,
-} from "lucide-react";
+import { ArrowRight, Eye, EyeOff, LoaderCircle } from "lucide-react";
 import axios from "axios";
 
-import {
-  Link,
-  useLocation,
-  useNavigate,
-} from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 
-import {
-  loginUser,
-  saveAuth,
-} from "../services/auth";
+import { loginUser, saveAuth } from "../services/auth";
 
 import { useAuth } from "../context/AuthContext";
 
@@ -33,41 +21,24 @@ export default function Login() {
 
   const { setUser } = useAuth();
 
-  const state =
-    location.state as
-      | LocationState
-      | null;
+  const state = location.state as LocationState | null;
 
-  const [email, setEmail] =
-    useState("");
+  const [email, setEmail] = useState("");
 
-  const [password, setPassword] =
-    useState("");
+  const [password, setPassword] = useState("");
 
-  const [
-    showPassword,
-    setShowPassword,
-  ] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const formComplete =
-    email.trim() !== "" &&
-    password.trim() !== "";
+  const formComplete = email.trim() !== "" && password.trim() !== "";
 
-  async function handleSubmit(
-    event: SubmitEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (
-      !formComplete ||
-      loading
-    ) {
+    if (!formComplete || loading) {
       return;
     }
 
@@ -76,16 +47,12 @@ export default function Login() {
     try {
       setLoading(true);
 
-      const data =
-        await loginUser({
-          email: email.trim(),
-          password,
-        });
+      const data = await loginUser({
+        email: email.trim(),
+        password,
+      });
 
-      saveAuth(
-  data.user,
-  data.csrfToken,
-);
+      saveAuth(data.user, data.csrfToken);
 
       /*
         saveAuth() keeps the session
@@ -111,36 +78,23 @@ export default function Login() {
         3. Regular guests go to account.
       */
 
-     const redirectTo =
-  data.user.role === "ADMIN"
-    ? state?.from?.startsWith("/admin")
-      ? state.from
-      : "/admin"
-    : state?.from &&
-        !state.from.startsWith("/admin")
-      ? state.from
-      : "/account";
+      const redirectTo =
+        data.user.role === "ADMIN"
+          ? state?.from?.startsWith("/admin")
+            ? state.from
+            : "/admin"
+          : state?.from && !state.from.startsWith("/admin")
+            ? state.from
+            : "/account";
 
-navigate(redirectTo, {
-  replace: true,
-});
-    } catch (
-      error: unknown
-    ) {
-      if (
-        axios.isAxiosError(
-          error,
-        )
-      ) {
-        setError(
-          error.response?.data
-            ?.message ||
-            "Unable to sign in.",
-        );
+      navigate(redirectTo, {
+        replace: true,
+      });
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        setError(error.response?.data?.message || "Unable to sign in.");
       } else {
-        setError(
-          "Unable to sign in.",
-        );
+        setError("Unable to sign in.");
       }
     } finally {
       setLoading(false);
@@ -188,12 +142,7 @@ navigate(redirectTo, {
             }}
             transition={{
               duration: 0.7,
-              ease: [
-                0.22,
-                1,
-                0.36,
-                1,
-              ],
+              ease: [0.22, 1, 0.36, 1],
             }}
             className="mx-auto w-full max-w-md min-w-0"
           >
@@ -206,9 +155,7 @@ navigate(redirectTo, {
             </h2>
 
             <p className="mt-5 max-w-sm text-sm leading-7 text-white/45">
-              Sign in to manage your
-              bookings and continue
-              where you left off.
+              Sign in to manage your bookings and continue where you left off.
             </p>
 
             {state?.from && (
@@ -223,17 +170,11 @@ navigate(redirectTo, {
                 }}
                 className="mt-6 rounded-[16px] border border-[#c9b58d]/15 bg-[#c9b58d]/5 px-4 py-3 text-sm leading-6 text-[#d8cab0]"
               >
-                Sign in to continue
-                your reservation.
+                Sign in to continue your reservation.
               </motion.div>
             )}
 
-            <form
-              onSubmit={
-                handleSubmit
-              }
-              className="mt-9 space-y-4"
-            >
+            <form onSubmit={handleSubmit} className="mt-9 space-y-4">
               {/* EMAIL */}
               <label className="block min-w-0">
                 <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/35">
@@ -243,13 +184,8 @@ navigate(redirectTo, {
                 <input
                   type="email"
                   value={email}
-                  onChange={(
-                    event,
-                  ) => {
-                    setEmail(
-                      event.target
-                        .value,
-                    );
+                  onChange={(event) => {
+                    setEmail(event.target.value);
 
                     if (error) {
                       setError("");
@@ -269,28 +205,13 @@ navigate(redirectTo, {
 
                 <div className="relative mt-2 min-w-0">
                   <input
-                    type={
-                      showPassword
-                        ? "text"
-                        : "password"
-                    }
-                    value={
-                      password
-                    }
-                    onChange={(
-                      event,
-                    ) => {
-                      setPassword(
-                        event.target
-                          .value,
-                      );
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
 
-                      if (
-                        error
-                      ) {
-                        setError(
-                          "",
-                        );
+                      if (error) {
+                        setError("");
                       }
                     }}
                     autoComplete="current-password"
@@ -300,33 +221,24 @@ navigate(redirectTo, {
 
                   <button
                     type="button"
-                    onClick={() =>
-                      setShowPassword(
-                        (
-                          current,
-                        ) =>
-                          !current,
-                      )
-                    }
+                    onClick={() => setShowPassword((current) => !current)}
                     aria-label={
-                      showPassword
-                        ? "Hide password"
-                        : "Show password"
+                      showPassword ? "Hide password" : "Show password"
                     }
                     className="absolute right-3 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center text-white/35 transition hover:text-white"
                   >
-                    {showPassword ? (
-                      <EyeOff
-                        size={17}
-                      />
-                    ) : (
-                      <Eye
-                        size={17}
-                      />
-                    )}
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                   </button>
                 </div>
               </label>
+              <div className="flex justify-end">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-white/40 transition hover:text-white"
+                >
+                  Forgot password?
+                </Link>
+              </div>
 
               {/* ERROR */}
               {error && (
@@ -348,23 +260,15 @@ navigate(redirectTo, {
               {/* SUBMIT */}
               <button
                 type="submit"
-                disabled={
-                  !formComplete ||
-                  loading
-                }
+                disabled={!formComplete || loading}
                 className="group flex min-h-14 w-full min-w-0 items-center justify-between gap-4 rounded-full bg-[#f5f1e8] px-5 text-sm font-medium text-[#171714] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <span className="truncate">
-                  {loading
-                    ? "Signing in..."
-                    : "Sign in"}
+                  {loading ? "Signing in..." : "Sign in"}
                 </span>
 
                 {loading ? (
-                  <LoaderCircle
-                    size={17}
-                    className="shrink-0 animate-spin"
-                  />
+                  <LoaderCircle size={17} className="shrink-0 animate-spin" />
                 ) : (
                   <ArrowRight
                     size={17}
@@ -377,12 +281,10 @@ navigate(redirectTo, {
             {/* REGISTER */}
             <p className="mt-7 text-center text-sm leading-6 text-white/40">
               New to Haven?{" "}
-
               <Link
                 to="/register"
                 state={{
-                  from:
-                    state?.from,
+                  from: state?.from,
                 }}
                 className="text-white transition hover:text-white/70"
               >

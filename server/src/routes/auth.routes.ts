@@ -2,9 +2,13 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 
 import {
+  changePassword,
+  forgotPassword,
   login,
   logout,
   register,
+  resetPassword,
+  updateProfile,
 } from "../controllers/auth.controller.js";
 
 import {
@@ -12,12 +16,21 @@ import {
 } from "../middleware/validation.middleware.js";
 
 import {
+  changePasswordSchema,
+  forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  resetPasswordSchema,
+  updateProfileSchema,
 } from "../schemas/auth.schema.js";
+
 import {
   authenticateToken,
 } from "../middleware/auth.middleware.js";
+
+import {
+  csrfProtection,
+} from "../middleware/csrf.middleware.js";
 
 import {
   prisma,
@@ -26,9 +39,8 @@ import {
 const router = Router();
 
 /*
-  Strict limiter only for endpoints
-  that attackers could repeatedly hit
-  to guess credentials or create accounts.
+  Strict limiter for authentication-related
+  endpoints that attackers could repeatedly hit.
 */
 const authLimiter =
   rateLimit({
@@ -47,6 +59,12 @@ const authLimiter =
     },
   });
 
+/*
+ * ==========================================
+ * REGISTER
+ * ==========================================
+ */
+
 router.post(
   "/register",
   authLimiter,
@@ -55,6 +73,12 @@ router.post(
   ),
   register,
 );
+
+/*
+ * ==========================================
+ * LOGIN
+ * ==========================================
+ */
 
 router.post(
   "/login",
@@ -66,22 +90,84 @@ router.post(
 );
 
 /*
-  Logout does not need the strict
-  authentication-attempt limiter.
-*/
+ * ==========================================
+ * FORGOT PASSWORD
+ * ==========================================
+ */
+
+router.post(
+  "/forgot-password",
+  authLimiter,
+  validateBody(
+    forgotPasswordSchema,
+  ),
+  forgotPassword,
+);
+
+/*
+ * ==========================================
+ * RESET PASSWORD
+ * ==========================================
+ */
+
+router.post(
+  "/reset-password",
+  authLimiter,
+  validateBody(
+    resetPasswordSchema,
+  ),
+  resetPassword,
+);
+
+/*
+ * ==========================================
+ * LOGOUT
+ * ==========================================
+ */
+
 router.post(
   "/logout",
   logout,
 );
 
 /*
-  Current authenticated user.
+ * ==========================================
+ * UPDATE PROFILE
+ * ==========================================
+ */
 
-  authenticateToken reads the httpOnly
-  haven_token cookie, validates the JWT,
-  and confirms the user's current role
-  from the database.
-*/
+router.patch(
+  "/profile",
+  authenticateToken,
+  csrfProtection,
+  validateBody(
+    updateProfileSchema,
+  ),
+  updateProfile,
+);
+
+/*
+ * ==========================================
+ * CHANGE PASSWORD
+ * ==========================================
+ */
+
+router.patch(
+  "/change-password",
+  authenticateToken,
+  csrfProtection,
+  validateBody(
+    changePasswordSchema,
+  ),
+  changePassword,
+);
+
+/*
+ * ==========================================
+ * CURRENT USER
+ * ==========================================
+ */
+
 router.get(
   "/me",
   authenticateToken,

@@ -10,25 +10,37 @@ import BookingDetails from "./pages/BookingDetails";
 import Experience from "./pages/Experience";
 import About from "./pages/About";
 import Login from "./pages/login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Register from "./pages/Register";
-import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
+
+import AccountLayout from "./components/account/AccountLayout";
+import AccountOverview from "./pages/account/AccountOverview";
+import AccountBookings from "./pages/account/AccountBookings";
+import AccountProfile from "./pages/account/AccountProfile";
+import AccountSecurity from "./pages/account/AccountSecurity";
 import Admin from "./pages/Admin";
 import AdminBookings from "./pages/AdminBooking";
 import AdminRooms from "./pages/AdminRooms";
+import AdminUsers from "./pages/AdminUsers";
 
 import AdminRoute from "./components/auth/AdminRoute";
 import AdminLayout from "./components/admin/AdminLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import AdminUsers from "./pages/AdminUsers";
+
 export default function App() {
   const location = useLocation();
 
   const isAdminRoute = location.pathname.startsWith("/admin");
 
+  const isAccountRoute = location.pathname.startsWith("/account");
+
+  const hidePublicLayout = isAdminRoute || isAccountRoute;
+
   return (
     <>
-      {!isAdminRoute && <Navbar />}
+      {!hidePublicLayout && <Navbar />}
 
       <main>
         <Routes>
@@ -44,17 +56,29 @@ export default function App() {
 
           <Route path="/login" element={<Login />} />
 
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+
+          <Route path="/reset-password" element={<ResetPassword />} />
+
           <Route path="/register" element={<Register />} />
 
+          {/* GUEST DASHBOARD */}
           <Route
             path="/account"
             element={
               <ProtectedRoute>
-                <Account />
+                <AccountLayout />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<AccountOverview />} />
 
+            <Route path="bookings" element={<AccountBookings />} />
+            <Route path="profile" element={<AccountProfile />} />
+            <Route path="security" element={<AccountSecurity />} />
+          </Route>
+
+          {/* BOOKING DETAILS */}
           <Route
             path="/bookings/:id"
             element={
@@ -78,6 +102,7 @@ export default function App() {
             <Route path="bookings" element={<AdminBookings />} />
 
             <Route path="rooms" element={<AdminRooms />} />
+
             <Route path="users" element={<AdminUsers />} />
           </Route>
 
@@ -85,7 +110,7 @@ export default function App() {
         </Routes>
       </main>
 
-      {!isAdminRoute && <Footer />}
+      {!hidePublicLayout && <Footer />}
     </>
   );
 }
