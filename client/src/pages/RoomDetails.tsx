@@ -26,6 +26,7 @@ import {
 import axios from "axios";
 
 import { api } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import { fallbackRoomGallery, roomGallery } from "../data/roomGallery";
 
 import type { Room, RoomResponse } from "../../../server/src/types/room";
@@ -116,6 +117,7 @@ function isValidDateRange(checkIn: string, checkOut: string) {
 }
 
 export default function RoomDetails() {
+  const { user } = useAuth();
   const { id } = useParams();
 
   const navigate = useNavigate();
@@ -299,42 +301,60 @@ export default function RoomDetails() {
     });
   }
 
-  async function handleBooking() {
-    if (!room) {
-      return;
-    }
+async function handleBooking() {
+  if (!room) {
+    return;
+  }
 
-    setBookingError("");
-    setBookingSuccess("");
+  setBookingError("");
+  setBookingSuccess("");
 
-    if (!checkIn || !checkOut) {
-      setBookingError("Select your check-in and check-out dates.");
+  if (!checkIn || !checkOut) {
+    setBookingError(
+      "Select your check-in and check-out dates.",
+    );
 
-      return;
-    }
+    return;
+  }
 
-    if (numberOfNights <= 0) {
-      setBookingError("Check-out must be after check-in.");
+  if (numberOfNights <= 0) {
+    setBookingError(
+      "Check-out must be after check-in.",
+    );
 
-      return;
-    }
+    return;
+  }
 
-    const token = localStorage.getItem("haven_token");
+  /*
+    Authentication is now based on AuthContext.
 
-    if (!token) {
-      navigate("/login", {
-        state: {
-          from: `${location.pathname}${location.search}`,
-        },
-      });
+    We no longer check localStorage for haven_token
+    because the actual JWT is stored securely inside
+    an httpOnly cookie.
+  */
+  if (!user) {
+    navigate("/login", {
+      state: {
+        from: `${location.pathname}${location.search}`,
+      },
+    });
 
-      return;
-    }
+    return;
+  }
 
-    try {
-      setBookingLoading(true);
+  try {
+    setBookingLoading(true);
 
-      const response = await api.post<BookingResponse>(
+    /*
+      api.ts already uses withCredentials: true.
+
+      That means the browser automatically sends
+      the haven_token httpOnly cookie to the backend.
+
+      No Authorization header is needed.
+    */
+    const response =
+      await api.post<BookingResponse>(
         "/api/bookings",
         {
           roomId: room.id,
@@ -342,30 +362,63 @@ export default function RoomDetails() {
           checkOut,
           guests,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
       );
 
-      setBookingSuccess(
-        response.data.message || "Booking created successfully.",
-      );
-    } catch (error: unknown) {
-      console.error("Booking failed:", error);
+    setBookingSuccess(
+      response.data.message ||
+        "Booking created successfully.",
+    );
 
-      if (axios.isAxiosError(error)) {
-        setBookingError(
-          error.response?.data?.message || "We couldn't complete your booking.",
-        );
-      } else {
-        setBookingError("We couldn't complete your booking.");
-      }
-    } finally {
-      setBookingLoading(false);
+    /*
+      After the reservation is successfully created,
+      send the guest straight to their booking details.
+    */
+    if (response.data.booking?.id) {
+      navigate(
+        `/bookings/${response.data.booking.id}`,
+      );
     }
+  } catch (error: unknown) {
+    console.error(
+      "Booking failed:",
+      error,
+    );
+
+    if (axios.isAxiosError(error)) {
+      /*
+        If the backend genuinely says the session is
+        no longer valid, send the guest back to login.
+
+        This is different from checking localStorage.
+        The backend is now the source of truth.
+      */
+      if (
+        error.response?.status === 401
+      ) {
+        navigate("/login", {
+          state: {
+            from: `${location.pathname}${location.search}`,
+          },
+        });
+
+        return;
+      }
+
+      setBookingError(
+        error.response?.data?.message ||
+          "We couldn't complete your booking.",
+      );
+    } else {
+      setBookingError(
+        "We couldn't complete your booking.",
+      );
+    }
+  } finally {
+    setBookingLoading(false);
   }
+}
+
+   
 
   function scrollToBooking() {
     bookingSectionRef.current?.scrollIntoView({
